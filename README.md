@@ -60,5 +60,5 @@ This backend API is written in Go and uses MySQL as the database.
 ### `/animal/<id>`
 
 #### GET Method
-- **Description**: retrieves the details of a specific animal identified by its unique id
+- **Description**: retrieves the details of a specific animal identified by its provided ID
 - **Additional Body Data**: None.

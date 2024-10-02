@@ -4,7 +4,7 @@ This backend API is written in Go and uses MySQL as the database.
 
 ## Setup Instructions
 
-### Before Running the Application
+### Before Running the API
 
 1. **Create MySQL Connection**
 
@@ -17,6 +17,13 @@ This backend API is written in Go and uses MySQL as the database.
 2. **Ensure Go Development Environment is Ready**
 
    Make sure you have Go installed and set up on your machine.
+
+---
+
+### Running the API server
+when everythings ready navigate to the same directory of main.go then run this command
+
+```go run main.go```
 
 ---
 

@@ -11,11 +11,18 @@ import (
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	//connect to anekazoo  database
-	dataSourceName := "root:123@tcp(127.0.0.7:3306)/anekazoo"
+	dataSourceName := os.Getenv("DATABASE_URL")
 	database, connectionError := sql.Open("mysql", dataSourceName)
 
 	if connectionError != nil {
@@ -29,14 +36,14 @@ func main() {
 		log.Printf("databasePingError: %s", databasePingError.Error())
 
 		//creating new anekazoo database
-		dataSourceName = "root:123@tcp(127.0.0.7:3306)/"
+		dataSourceName = os.Getenv("DATABASE_ROOT_URL")
 		database, connectionError = sql.Open("mysql", dataSourceName)                                   //making connection to "127.../" cause its root directory
 		if runCreatingDatabaseError := RunCreatingDatabase(database); runCreatingDatabaseError != nil { // run RunCreatingDatabase in root mysql directory
 			log.Fatalf("runCreatingDatabaseError: %v", runCreatingDatabaseError.Error())
 		}
 
 		//connect to newly created database
-		dataSourceName = "root:123@tcp(127.0.0.7:3306)/anekazoo"
+		dataSourceName = os.Getenv("DATABASE_URL")
 		database, connectionError = sql.Open("mysql", dataSourceName)
 		if connectionError != nil {
 			log.Fatalf("error: %s", connectionError.Error())

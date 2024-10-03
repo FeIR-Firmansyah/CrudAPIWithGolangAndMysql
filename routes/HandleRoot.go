@@ -5,6 +5,7 @@ import (
 	"net/http"
 )
 
+// nothing to see here... hehehe
 func HandleRoot(responseWriter http.ResponseWriter, request *http.Request) {
-	fmt.Fprintf(responseWriter, "Hello, Dunia!")
+	fmt.Fprintf(responseWriter, "Hello, Dunia! :D")
 }

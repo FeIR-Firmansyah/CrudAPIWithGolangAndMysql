@@ -33,6 +33,7 @@ func HandleAnimal(responseWriter http.ResponseWriter, request *http.Request, dat
 
 func handleAnimalPost(database *sql.DB, responseWriter http.ResponseWriter, request *http.Request) {
 	fmt.Println("Handling POST request in /Animal")
+	//read request json body
 	body, readBodyError := io.ReadAll(request.Body)
 	if readBodyError != nil {
 		http.Error(responseWriter, "Error reading request body", http.StatusBadRequest)
@@ -40,13 +41,14 @@ func handleAnimalPost(database *sql.DB, responseWriter http.ResponseWriter, requ
 	}
 	defer request.Body.Close()
 
+	// create key/value pairs
 	var animalData map[string]interface{}
 	if err := json.Unmarshal(body, &animalData); err != nil {
 		http.Error(responseWriter, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
-	// Create a new Animal instance and populate it from the request data
+	// Create the Animal struct from the data
 	animal := Animal{}
 	if name, ok := animalData["name"].(string); ok {
 		animal.Name = name
@@ -58,6 +60,7 @@ func handleAnimalPost(database *sql.DB, responseWriter http.ResponseWriter, requ
 		animal.Legs = int(legs)
 	}
 
+	// Check if an animal with the same name, class, and legs already exists in the database
 	checkIfIdExistQuery := "SELECT id FROM animal WHERE name = ? AND class = ? AND legs = ?"
 	var existingID int
 	err := database.QueryRow(checkIfIdExistQuery, animal.Name, animal.Class, animal.Legs).Scan(&existingID)
@@ -67,6 +70,7 @@ func handleAnimalPost(database *sql.DB, responseWriter http.ResponseWriter, requ
 		return
 	}
 
+	// if we have an existing animal then response with http.StatusConflict
 	if existingID != 0 {
 		http.Error(responseWriter, "Exact match already exists", http.StatusConflict)
 		return
@@ -96,7 +100,7 @@ func handleAnimalGet(database *sql.DB, responseWriter http.ResponseWriter, reque
 	}
 	defer rows.Close()
 
-	// Prepare to read the results
+	// read the results
 	var animals []Animal
 	for rows.Next() {
 		var animal Animal
@@ -113,11 +117,13 @@ func handleAnimalGet(database *sql.DB, responseWriter http.ResponseWriter, reque
 		return
 	}
 
+	// if theres no rows returned http.StatusNotFound
 	if len(animals) == 0 {
 		http.Error(responseWriter, "No animals found", http.StatusNotFound)
 		return
 	}
 
+	// append all data into one sigle output, then send it
 	output := ""
 	for _, animal := range animals {
 		output += fmt.Sprintf("ID: %d, Name: %s, Class: %s, Legs: %d\n", animal.ID, animal.Name, animal.Class, animal.Legs)
@@ -129,6 +135,7 @@ func handleAnimalGet(database *sql.DB, responseWriter http.ResponseWriter, reque
 func handleAnimalPut(database *sql.DB, responseWriter http.ResponseWriter, request *http.Request) {
 	fmt.Println("Handling PUT request in /Animal")
 
+	// get request json body
 	body, readBodyError := io.ReadAll(request.Body)
 	if readBodyError != nil {
 		http.Error(responseWriter, "Error reading request body", http.StatusBadRequest)
@@ -136,12 +143,14 @@ func handleAnimalPut(database *sql.DB, responseWriter http.ResponseWriter, reque
 	}
 	defer request.Body.Close()
 
+	// Parse the request body into a struct (Animal)
 	var animalData Animal
 	if jsonUnmarshalError := json.Unmarshal(body, &animalData); jsonUnmarshalError != nil {
 		http.Error(responseWriter, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
+	// Check if an animal with the given ID exists in the database
 	checkIfIdExistQuery := "SELECT id FROM animal WHERE id = ?"
 	var existingID int
 	err := database.QueryRow(checkIfIdExistQuery, animalData.ID).Scan(&existingID)
@@ -151,6 +160,7 @@ func handleAnimalPut(database *sql.DB, responseWriter http.ResponseWriter, reque
 		return
 	}
 
+	// if the id exist, Update the animal
 	if existingID != 0 {
 		// Update the existing animal
 		query := "UPDATE animal SET name = ?, class = ?, legs = ? WHERE id = ?"
@@ -163,6 +173,7 @@ func handleAnimalPut(database *sql.DB, responseWriter http.ResponseWriter, reque
 		return
 	}
 
+	//if id doesnt exist then insert/create as new data rows
 	query := "INSERT INTO animal (name, class, legs) VALUES (?, ?, ?)"
 	_, queryError := database.Exec(query, animalData.Name, animalData.Class, animalData.Legs)
 	if queryError != nil {
@@ -177,6 +188,7 @@ func handleAnimalPut(database *sql.DB, responseWriter http.ResponseWriter, reque
 func handleAnimalDelete(database *sql.DB, responseWriter http.ResponseWriter, request *http.Request) {
 	fmt.Println("Handling DELETE request in /Animal")
 
+	// get request json body
 	body, readBodyError := io.ReadAll(request.Body)
 	if readBodyError != nil {
 		http.Error(responseWriter, "Error reading request body", http.StatusBadRequest)
@@ -184,18 +196,20 @@ func handleAnimalDelete(database *sql.DB, responseWriter http.ResponseWriter, re
 	}
 	defer request.Body.Close()
 
+	//pasing request body into struct (Animal)
 	var animalData Animal
 	if jsonUnmarshalError := json.Unmarshal(body, &animalData); jsonUnmarshalError != nil {
 		http.Error(responseWriter, "Error parsing JSON", http.StatusBadRequest)
 		return
 	}
 
+	// check if id exist
 	checkIfIdExistQuery := "SELECT id FROM animal WHERE id = ?"
 	var existingID int
 	err := database.QueryRow(checkIfIdExistQuery, animalData.ID).Scan(&existingID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			// If no rows are returned, the ID does not exist
+			// If no rows are returned, the ID does not exist. response with http.StatusNotFound
 			http.Error(responseWriter, fmt.Sprintf("Animal with ID %d does not exist", animalData.ID), http.StatusNotFound)
 			return
 		}
@@ -204,6 +218,7 @@ func handleAnimalDelete(database *sql.DB, responseWriter http.ResponseWriter, re
 		return
 	}
 
+	//delete animal rows that match the given id
 	query := "DELETE FROM animal WHERE id = ?"
 	_, deleteError := database.Exec(query, animalData.ID)
 	if deleteError != nil {

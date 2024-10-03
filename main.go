@@ -23,15 +23,15 @@ func main() {
 	}
 	defer database.Close()
 
-	// Check if the database answer, if not create one.
+	// Check if the database answer, if not then create one.
 	databasePingError := database.Ping()
 	if databasePingError != nil {
 		log.Printf("databasePingError: %s", databasePingError.Error())
 
-		//creating new database
+		//creating new anekazoo database
 		dataSourceName = "root:123@tcp(127.0.0.7:3306)/"
-		database, connectionError = sql.Open("mysql", dataSourceName)
-		if runCreatingDatabaseError := RunCreatingDatabase(database); runCreatingDatabaseError != nil {
+		database, connectionError = sql.Open("mysql", dataSourceName)                                   //making connection to "127.../" cause its root directory
+		if runCreatingDatabaseError := RunCreatingDatabase(database); runCreatingDatabaseError != nil { // run RunCreatingDatabase in root mysql directory
 			log.Fatalf("runCreatingDatabaseError: %v", runCreatingDatabaseError.Error())
 		}
 
@@ -68,6 +68,7 @@ func main() {
 }
 
 func RunCreatingDatabase(database *sql.DB) error {
+	//get and execute CreatingDatabase.sql migration file
 	currentWorkingDirectory, directoryError := os.Getwd()
 	if directoryError != nil {
 		return directoryError
@@ -84,6 +85,7 @@ func RunCreatingDatabase(database *sql.DB) error {
 }
 
 func RunCreatingTable(database *sql.DB) error {
+	//get and execute CreatingDatabase.sql migration file
 	currentWorkingDirectory, directoryError := os.Getwd()
 	if directoryError != nil {
 		return directoryError
